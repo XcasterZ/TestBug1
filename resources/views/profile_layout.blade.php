@@ -19,9 +19,7 @@
         body {
             font-family: 'Kanit', sans-serif;
         }
-    </style>
-
-    
+    </style> 
     <style>
         .file-info {
             font-size: 14px;
@@ -256,7 +254,9 @@
     <script src="/js/script.js"></script>
     <script src="/js/script2.js"></script>
     <script src="https://kit.fontawesome.com/d671ca6a52.js" crossorigin="anonymous"></script>
-    
+    <script>
+        
+    </script>
 </body>
 
 </html>

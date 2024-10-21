@@ -70,19 +70,16 @@ body {
     grid-column-gap: 20px;
 }
 
-.profile_content1{
+.profile_content1 {
     grid-column: span 1; /* ขยายตัว element ให้ครอบคลุม 1 columns */
     display: flex; /* กำหนดให้เป็น flex container */
     flex-direction: column; /* กำหนดให้ flex items แสดงในแนวตั้ง */
     min-width: 250px;
-    /* height: 100vh; */
-    /* margin-right: 20px; */
-    /* border: 2px solid #000000; */
-    /* justify-content: center; */
     align-items: center;
-
     gap: 40px;
+    height: auto; /* ตั้งค่าความสูงเป็นอัตโนมัติ */
 }
+
 
 .profile_content2{
     grid-column: span 1; /* ขยายตัว element ให้ครอบคลุม 1 columns */
@@ -470,4 +467,5 @@ body a:hover {
         margin: 10% auto; /* Adjust margin for small screens */
         width: 90%; /* Full width on small screens */
     }
+    
 }

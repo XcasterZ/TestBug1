@@ -10,6 +10,8 @@
         href="{{ asset('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/product.css') }}">
     <link rel="stylesheet" href="{{ asset('https://cdnjs.cloudflare.com/ajax/libs/zoom.js/2.0.0/zoom.min.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
     <!-- <link rel="stylesheet" href="css/quantity.scss"> -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
@@ -168,38 +170,6 @@
                     <input class="product-qty" type="number" name="product-qty" min="1"
                         max="{{ $product->quantity }}" value="1" id="product-qty">
                 </div>
-                {{-- <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const inputField = document.getElementById('product-qty');
-                        const minQuantity = parseInt(inputField.getAttribute('min'));
-                        const maxQuantity = parseInt(inputField.getAttribute('max'));
-
-                        inputField.addEventListener('input', function() {
-                            let value = parseInt(inputField.value);
-                            if (!isNaN(value)) {
-                                if (value < minQuantity) {
-                                    inputField.value = minQuantity;
-                                } else if (value > maxQuantity) {
-                                    inputField.value = maxQuantity;
-                                }
-                            }
-                        });
-
-                        // Optional: To handle paste events
-                        inputField.addEventListener('paste', function(event) {
-                            setTimeout(() => {
-                                let value = parseInt(inputField.value);
-                                if (!isNaN(value)) {
-                                    if (value < minQuantity) {
-                                        inputField.value = minQuantity;
-                                    } else if (value > maxQuantity) {
-                                        inputField.value = maxQuantity;
-                                    }
-                                }
-                            }, 100);
-                        });
-                    });
-                </script> --}}
                 <div class="addToCart">
                     <button class="addCart" data-product-id="{{ $product->id }}"
                         data-user-id="{{ Auth::id() }}" type="submit">เพิ่มในตะกร้า</button>
@@ -207,7 +177,7 @@
                         data-user-id="{{ Auth::id() }}"><i class="far fa-heart"></i></button>
                 </div>
                 <div class="buyNow">
-                    <button class="buy_now">ซื้อตอนนี้</button>
+                    <button class="buy_now" onclick="buyNow()">ซื้อตอนนี้</button>
                 </div>
                 <h4>
                     @if ($user->first_name && $user->last_name)
@@ -247,8 +217,9 @@
                     @endif
                 </div>
                 <div class="addToCart">
-                    <button class="chat">แชทกับผู้ขาย</button>
-                    <button class="go_profile" onclick="window.location.href='{{ route('rate_star', ['id' => $user->id, 'product_id' => $product->id, 'source' => 'shop']) }}'">
+                    <button class="chat" data-seller-username="{{ $user->username }}">แชทกับผู้ขาย</button>
+                    <button class="go_profile"
+                        onclick="window.location.href='{{ route('rate_star', ['id' => $user->id, 'product_id' => $product->id, 'source' => 'shop']) }}'">
                         <i class="fa fa-user"></i>
                     </button>
                 </div>
@@ -400,6 +371,134 @@
                     }
                 });
             });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatButton = document.querySelector('.chat');
+
+            // ดึงข้อมูล user_id จาก product
+            const User = @json($user); // ดึงข้อมูล product
+            const userId = User.username; // ดึง user_id
+            const sellId = User.id;
+            console.log('user_id', userId);
+            chatButton.addEventListener('click', function() {
+                const chatUrl =
+                    `/chat?sellId=${encodeURIComponent(sellId)}&seller_id=${encodeURIComponent(userId)}`; // สร้าง URL สำหรับหน้าแชท
+                window.location.href =
+                    chatUrl; // เปลี่ยนเส้นทางไปยังหน้าแชทพร้อมกับ user_id และ username ของผู้ขาย
+            });
+        });
+
+        function buyNow() {
+
+            const User = @json($user); // ดึงข้อมูล product
+            const userId = User.username; // ดึง user_id
+            const sellId = User.id;
+            // ข้อมูลของสินค้า
+            const productId = '{{ $product->id }}'; // เพิ่มการดึง product_id
+            const productImagePath = '{{ asset('storage/' . $product->file_path_1) }}'; // เปลี่ยนให้เป็น path ของรูปสินค้า
+            const productName = '{{ $product->name }}'; // ชื่อสินค้า
+            const productPrice = '{{ $product->price }}'; // ราคา
+            const productQuantity = document.getElementById('product-qty').value; // จำนวนสินค้า
+            const currentUrl = encodeURIComponent(window.location.href);
+            const recipient = sellId;
+            var loggedInUserId = parseInt('{{ auth()->check() ? auth()->user()->id : 0 }}', 10);
+
+
+            const url =
+                `/chat?sellId=${encodeURIComponent(sellId)}&seller_id=${encodeURIComponent(userId)}&product_id=${encodeURIComponent(productId)}&image=${encodeURIComponent(productImagePath)}&name=${encodeURIComponent(productName)}&price=${encodeURIComponent(productPrice)}&quantity=${encodeURIComponent(productQuantity)}&current_url=${currentUrl}`;
+
+            log('URL to redirect:', url); // แสดง URL ที่จะถูกเปลี่ยนเส้นทาง
+            log('User ID:', userId); // แสดง userId
+            log('Product ID:', productId); // แสดง productId
+            log('Product Image Path:', productImagePath); // แสดง path ของรูปภาพ
+            log('Product Name:', productName); // แสดงชื่อสินค้า
+            log('Product Price:', productPrice); // แสดงราคา
+            log('Product Quantity:', productQuantity); // แสดงจำนวนสินค้า
+            log('Current URL:', currentUrl); // แสดง URL ปัจจุบัน
+            // เปลี่ยนเส้นทางไปยังหน้า chat พร้อมข้อมูลที่ส่ง
+            window.location.href = url;
+
+            if (productId && productImagePath && productName && productPrice && productQuantity && recipient) {
+                sendChatMessage(productName, productImagePath, productPrice, productQuantity, currentUrl, userId,
+                    recipient);
+            } else {
+                console.warn('Missing product information.');
+            }
+
+            // ฟังก์ชันเพื่อส่งข้อความ
+            function sendChatMessage(productName, productImage, productPrice, productQuantity, currentUrl, sellerId,
+                recipient) {
+                const message = ''; // สามารถกำหนดข้อความเริ่มต้น หรือปล่อยว่าง
+
+                // ข้อมูลสินค้า
+                const product = {
+                    product_name: productName,
+                    product_image: productImagePath,
+                    product_price: parseFloat(productPrice), // แปลงเป็นตัวเลข
+                    product_quantity: parseInt(productQuantity, 10), // แปลงเป็นจำนวนเต็ม
+                    current_url: window.location.href,
+                    product_id: productId, // ตรวจสอบให้แน่ใจว่าตัวแปร productId ถูกประกาศก่อนหน้านี้
+                    seller_id: userId
+                };
+
+                // รับ CSRF token จาก meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                console.log('Displaying product Sent', product);
+                console.log('sender: ', loggedInUserId);
+                console.log('recipient: ', parseInt(recipient, 10));
+                console.log('message: ', message);
+
+                axios.post('/store-message', {
+                        sender: parseInt('{{ auth()->check() ? auth()->user()->id : 0 }}',
+                        10), // ผู้ส่ง (ที่ได้จาก auth)
+                        recipient: parseInt(recipient, 10), // ผู้รับ (currentUserId)
+                        message: message, // ข้อความแชท
+                        ...product // ส่งข้อมูลสินค้าไปด้วย
+                    }, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken // เพิ่ม token ใน headers
+                        }
+                    })
+                    .then(response => {
+                        console.log('Message sent:', response.data);
+                        
+                    })
+                    .catch(error => {
+                        // แสดงรายละเอียดข้อผิดพลาด
+                        console.error('Error sending message:', error.message);
+                        if (error.response) {
+                            console.error('Response data:', error.response.data);
+                            console.error('Response status:', error.response.status);
+                            console.error('Response headers:', error.response.headers);
+                        } else if (error.request) {
+                            // ข้อผิดพลาดที่เกิดขึ้นในการส่งคำขอ แต่ไม่ได้รับการตอบกลับ
+                            console.error('Request data:', error.request);
+                        } else {
+                            // ข้อผิดพลาดในการตั้งค่าคำขอ
+                            console.error('Error', error.message);
+                        }
+                    });
+            }
+
+
+        }
+
+        function log(...args) {
+            console.log(...args);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // แสดงค่าของผลิตภัณฑ์
+            console.log('Product:', @json($product));
+
+            // แสดงค่าของผู้ใช้
+            console.log('User:', @json($user));
+
+            const User = @json($user); // ดึงข้อมูล product
+            const userId = User.id; // ดึง user_id
+            console.log('user_id', userId);
         });
     </script>
 

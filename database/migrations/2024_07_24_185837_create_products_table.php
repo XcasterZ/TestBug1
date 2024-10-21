@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id(); // id
-            $table->unsignedBigInteger('user_id'); // user_id as Foreign Key
+	        $table->unsignedBigInteger('user_id')->nullable();        
             $table->string('name');
             $table->integer('price');
             $table->integer('quantity')->nullable(); // Allow null values
@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('file_path_4')->nullable();
             $table->string('file_path_5')->nullable();
             $table->json('payment_methods')->nullable();
+            $table->timestamp('countdown')->nullable();
 
             // Define foreign key constraints
             $table->foreign('user_id')->references('id')->on('user_webs')->onDelete('cascade');

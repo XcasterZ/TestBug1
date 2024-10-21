@@ -174,5 +174,6 @@
     </section>
     <script src="/js/script2.js"></script>
     <script src="https://kit.fontawesome.com/d671ca6a52.js" crossorigin="anonymous"></script>
+
 </body>
 </html>

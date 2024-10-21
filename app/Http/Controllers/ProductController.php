@@ -238,7 +238,7 @@ class ProductController extends Controller
 
     public function getDistrictOptions()
     {
-        $filename = storage_path('app/districts.txt');
+        $filename = storage_path('app/district.txt');
         $districts = [];
 
         if (file_exists($filename)) {

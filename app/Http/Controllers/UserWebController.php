@@ -8,16 +8,70 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Http\Request;
 use App\Models\UserWeb;
 use Illuminate\Support\Facades\Log;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Mail;
+
+
+
+use App\Mail\OtpMail;
+
+
+
 
 class UserWebController extends Controller
 {
     // --------------------- Auth Register Login Logout --------------------
+    // public function store(Request $request)
+    // {
+    //     // Validate the request data
+    //     $validatedData = $request->validate([
+    //         'username' => 'required|string|max:255|unique:user_webs',
+    //         'password' => 'nullable|string|min:8',
+    //         'email' => 'required|string|email|max:255|unique:user_webs',
+    //         'phone_number' => 'required|string|max:15',
+    //         'first_name' => 'nullable|string|max:255',
+    //         'last_name' => 'nullable|string|max:255',
+    //         'profile_detail' => 'nullable|string',
+    //         'facebook' => 'nullable|url|max:255',
+    //         'instagram' => 'nullable|url|max:255',
+    //         'line' => 'nullable|url|max:255',
+    //         'google_id' => 'nullable|string|max:255',
+    //     ]);
+
+    //     // Create a new user
+    //     $user = UserWeb::create([
+    //         'username' => $validatedData['username'],
+    //         'password' => $validatedData['password'] ?? null,
+    //         'email' => $validatedData['email'],
+    //         'phone_number' => $validatedData['phone_number'] ?? null,
+    //         'first_name' => $validatedData['first_name'] ?? null,
+    //         'last_name' => $validatedData['last_name'] ?? null,
+    //         'profile_detail' => $validatedData['profile_detail'] ?? null,
+    //         'facebook' => $validatedData['facebook'] ?? null,
+    //         'instagram' => $validatedData['instagram'] ?? null,
+    //         'line' => $validatedData['line'] ?? null,
+    //         'google_id' => $validatedData['google_id'] ?? null,
+    //         'profile_img' => 'Profile Pic/default.png',
+    //     ]);
+
+    //     $otp = rand(100000, 999999);
+
+    //     // ส่ง OTP ไปยังอีเมล
+    //     Mail::to($validatedData['email'])->send(new OtpMail($otp));
+
+    //     // บันทึก OTP ลงใน session
+    //     session(['otp' => $otp]);
+
+    //     // ไม่ให้เข้าสู่ระบบที่นี่
+    //     return response()->json(['success' => true, 'otp_required' => true]);
+    // }
+
     public function store(Request $request)
     {
         // Validate the request data
         $validatedData = $request->validate([
             'username' => 'required|string|max:255|unique:user_webs',
-            'password' => 'required|string|min:8',
+            'password' => 'nullable|string|min:8',
             'email' => 'required|string|email|max:255|unique:user_webs',
             'phone_number' => 'required|string|max:15',
             'first_name' => 'nullable|string|max:255',
@@ -26,27 +80,47 @@ class UserWebController extends Controller
             'facebook' => 'nullable|url|max:255',
             'instagram' => 'nullable|url|max:255',
             'line' => 'nullable|url|max:255',
+            'google_id' => 'nullable|string|max:255',
         ]);
 
-        // Create a new user
-        UserWeb::create([
-            'username' => $validatedData['username'],
-            'password' => $validatedData['password'], // Store password as plain text
-            'email' => $validatedData['email'],
-            'phone_number' => $validatedData['phone_number'],
-            'first_name' => $validatedData['first_name'] ?? null, // Default to null if not provided
-            'last_name' => $validatedData['last_name'] ?? null, // Default to null if not provided
-            'profile_detail' => $validatedData['profile_detail'] ?? null, // Default to null if not provided
-            'facebook' => $validatedData['facebook'] ?? null, // Default to null if not provided
-            'instagram' => $validatedData['instagram'] ?? null, // Default to null if not provided
-            'line' => $validatedData['line'] ?? null, // Default to null if not provided
-            'profile_img' => 'Profile Pic/default.png', // Set default profile image
-        ]);
+        // บันทึกข้อมูลลงใน session
+        session(['validatedData' => $validatedData]);
 
-        // Redirect to the home page with a success message
-        return redirect()->route('auth.login')->with('success', 'Registration successful!');
+        // สร้าง OTP
+        $otp = rand(100000, 999999);
+
+        // ส่ง OTP ไปยังอีเมล
+        Mail::to($validatedData['email'])->send(new OtpMail($otp));
+
+        // บันทึก OTP ลงใน session
+        session(['otp' => $otp]);
+
+        return response()->json(['success' => true, 'otp_required' => true]);
     }
 
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate(['otp' => 'required|integer', 'email' => 'required|string|email']);
+
+        // ตรวจสอบ OTP กับที่เก็บใน session
+        if ($request->otp == session('otp')) {
+            // ถ้า OTP ถูกต้อง ให้สร้างผู้ใช้
+            $validatedData = session('validatedData'); // ดึงข้อมูลที่บันทึกไว้ใน session
+            $validatedData['password'] = $validatedData['password'] ?? null; // ใส่รหัสผ่านถ้ามี
+
+            // สร้างผู้ใช้ใหม่ โดยไม่ hash รหัสผ่าน
+            UserWeb::create($validatedData);
+
+            // ลบ OTP และข้อมูลที่ใช้ในการสมัครออกจาก session
+            session()->forget('otp');
+            session()->forget('validatedData');
+
+            return response()->json(['success' => true, 'message' => 'Registration successful.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid OTP.'], 400);
+    }
 
     public function checkExistingData(Request $request)
     {
@@ -74,21 +148,19 @@ class UserWebController extends Controller
         ]);
     }
 
-
-
     public function login(Request $request)
     {
         // Validate the request data
         $request->validate([
             'username' => 'required|string',
-            'password' => 'required|string',
+            'password' => 'required|string', // ยังคงบังคับให้ใส่รหัสผ่านในกรณีนี้
         ]);
 
         // Attempt to find the user
         $user = UserWeb::where('username', $request->username)->first();
 
         // Verify the password
-        if ($user && $request->password === $user->password) {
+        if ($user && $user->password && $request->password === $user->password) {
             // Authentication passed
             Auth::login($user);
             return response()->json(['success' => true]);
@@ -112,8 +184,6 @@ class UserWebController extends Controller
         // Redirect to the homepage
         return redirect('/');
     }
-
-
 
     // ------------------ Profile -----------------------
     public function edit()
@@ -144,7 +214,7 @@ class UserWebController extends Controller
             'email' => 'required|string|email|max:255',
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'phone_number' => 'required|string|max:15',
+            'phone_number' => 'nullable|string|max:15',
             'profile_detail' => 'nullable|string',
             'facebook' => 'nullable|url|max:255',
             'instagram' => 'nullable|url|max:255',
@@ -161,7 +231,7 @@ class UserWebController extends Controller
                 'email' => $validatedData['email'],
                 'first_name' => $validatedData['first_name'] ?? null,
                 'last_name' => $validatedData['last_name'] ?? null,
-                'phone_number' => $validatedData['phone_number'],
+                'phone_number' => $validatedData['phone_number'] ?? null,
                 'profile_detail' => $validatedData['profile_detail'] ?? null,
                 'facebook' => $validatedData['facebook'] ?? null,
                 'instagram' => $validatedData['instagram'] ?? null,
@@ -238,5 +308,6 @@ class UserWebController extends Controller
         }
 
         return response()->json(['error' => 'No file uploaded'], 400);
-    }
+    } // สร้างคลาส Mail สำหรับ OTP
+
 }

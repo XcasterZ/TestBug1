@@ -5,27 +5,23 @@ namespace App\Models;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Notifications\Notifiable; // เพิ่มบรรทัดนี้
 
 
-class UserWeb extends Model implements AuthenticatableContract
+class UserWeb extends Model implements AuthenticatableContract, CanResetPasswordContract
 {
-    use Authenticatable;
+    use Authenticatable, CanResetPassword, Notifiable;
 
     protected $fillable = [
-        'username',
-        'password',
-        'email',
-        'phone_number',
-        'first_name',
-        'last_name',
-        'profile_detail',
-        'facebook',
-        'instagram',
-        'line',
-        'profile_img',
-        'rating' // เพิ่มคอลัมน์ rating
+        'username', 'password', 'email', 'phone_number', 
+        'first_name', 'last_name', 'profile_detail', 
+        'facebook', 'instagram', 'line', 'google_id',
+        'facebook_id', 
+        'profile_img'
     ];
-
+    
     protected $hidden = [
         'password',
         'remember_token',

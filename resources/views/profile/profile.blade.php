@@ -65,7 +65,7 @@
             <form id="passwordForm">
                 <div class="input-group">
                     <label for="old_password">รหัสผ่านเก่า</label>
-                    <input type="password" id="old_password" name="old_password" required>
+                    <input type="password" id="old_password" name="old_password" >
                 </div>
                 <div class="input-group">
                     <label for="new_password">รหัสผ่านใหม่</label>
@@ -91,7 +91,7 @@
             <a href="{{ route('profile.edit') }}">
                 <li class="active">โปรไฟล์</li>
             </a>
-            <a href="{{ route('profile.address')}}">
+            <a href="{{ route('profile.address') }}">
                 <li>ที่อยู่</li>
             </a>
             <a href="{{ route('cart.show') }}">
@@ -106,7 +106,8 @@
             <li>
                 <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                     @csrf
-                    <button type="submit" style="background: none; border: none; color: inherit; cursor: pointer; width:100%">ออกจากระบบ</button>
+                    <button type="submit"
+                        style="background: none; border: none; color: inherit; cursor: pointer; width:100%">ออกจากระบบ</button>
                 </form>
             </li>
         </ul>
@@ -124,19 +125,26 @@
             // Get values
             var username = $('textarea[name="username"]').val();
             var email = $('textarea[name="email"]').val();
-            var phoneNumber = $('textarea[name="phone_number"]').val();
+            var phoneNumber = $('textarea[name="phone_number"]').val()
+                .trim(); // trim to remove whitespace
 
-            // Validate input fields
+            // Check if phone number is empty, set to null if so
+            if (phoneNumber === '') {
+                phoneNumber = null; // ส่งค่า null ไปยังฐานข้อมูล
+            } else if (!isValidPhoneNumber(phoneNumber)) {
+                alert('เบอร์โทรต้องประกอบด้วยเฉพาะตัวเลขและต้องมีความยาว 10 หลัก');
+                return;
+            }
+
+            // Validate username and email
             if (!isValidUsername(username)) {
-                alert('ชื่อผู้ใช้สามารถใส่ได้เฉพาะภาษาอังกฤษ ตัวเลข ไม่สามารถเว้นวรรคหรือมีอักขระพิเศษได้');
+                alert(
+                    'ชื่อผู้ใช้สามารถใส่ได้เฉพาะภาษาอังกฤษ ตัวเลข ไม่สามารถเว้นวรรคหรือมีอักขระพิเศษได้'
+                    );
                 return;
             }
             if (!isValidEmail(email)) {
                 alert('อีเมลสามารถใช้ได้เฉพาะภาษาอังกฤษและไม่สามารถเว้นวรรคได้');
-                return;
-            }
-            if (!isValidPhoneNumber(phoneNumber)) {
-                alert('เบอร์โทรต้องประกอบด้วยเฉพาะตัวเลขและต้องมีความยาว 10 หลัก และไม่สามารถเว้นวรรคได้');
                 return;
             }
 
@@ -148,6 +156,7 @@
                     _token: '{{ csrf_token() }}',
                     username: username,
                     email: email,
+                    phone_number: phoneNumber, // ส่งค่า phoneNumber ที่อาจเป็น null
                     id: '{{ auth()->id() }}' // Send current user's ID
                 },
                 success: function(response) {
@@ -160,7 +169,7 @@
                         return;
                     }
 
-                    // If no errors, proceed with AJAX submission
+                    // Proceed with AJAX submission
                     $.ajax({
                         type: 'POST',
                         url: $('#profileForm').attr('action'),
@@ -181,6 +190,8 @@
             });
         });
 
+
+
         // Function to validate username
         function isValidUsername(username) {
             var regex = /^[a-zA-Z0-9_]+$/;
@@ -195,9 +206,16 @@
 
         // Function to validate phone number
         function isValidPhoneNumber(phoneNumber) {
+            // หากช่องเบอร์โทรว่าง ให้คืนค่า true
+            if (phoneNumber.trim() === '') {
+                return null; // ส่งค่า true เพื่อไม่ให้มีการแจ้งเตือน
+            }
+            // ตรวจสอบว่ามีความยาว 10 ตัวและประกอบด้วยเฉพาะตัวเลข
             var regex = /^[0-9]{10}$/;
-            return regex.test(phoneNumber) && !/\s/.test(phoneNumber);
+            return regex.test(phoneNumber);
         }
+
+
     });
 </script>
 
@@ -248,7 +266,7 @@
                 !/^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;"'<>,.?/-]*$/.test(confirmPassword)) {
                 alert(
                     'รหัสผ่านสามารถใช้ได้เฉพาะภาษาอังกฤษ ตัวเลข และอักขระพิเศษที่ระบุเท่านั้น และห้ามมีการเว้นวรรค'
-                    );
+                );
                 return;
             }
 

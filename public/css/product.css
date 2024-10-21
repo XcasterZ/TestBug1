@@ -298,7 +298,7 @@ body {
     border-radius: 10px;
     font-size: 18px;
     justify-content: center; /* จัดตำแหน่งตรงกลางแนวนอน */
-    align-items: center; /* จัดตำแหน่งตรงกลางแนวตั้ง */
+    align-items: center; /* จัดตำแหน่งตรงกลาproงแนวตั้ง */
     background-color: #000000;
     border: 2px solid #000000;
     transition: all .3s ease;

@@ -14,6 +14,8 @@ class CreateCartWishListTable extends Migration
             $table->json('cart_product_ids')->nullable();
             $table->json('cart_product_quantities')->nullable();
             $table->json('wish_list_product_ids')->nullable();
+            $table->json('add_cart_date')->nullable();
+            $table->json('add_wish_list_date')->nullable();
             $table->foreign('id_user')->references('id')->on('user_webs')->onDelete('cascade');
         });
     }
